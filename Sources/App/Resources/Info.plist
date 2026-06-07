@@ -36,5 +36,9 @@
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
 	<true/>
+
+	<!-- Conformité export : pas de chiffrement non-exempt → évite la question à chaque build TestFlight -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
