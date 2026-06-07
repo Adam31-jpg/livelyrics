@@ -48,13 +48,14 @@ public final class LyricsViewModel {
     /// Fréquence de rafraîchissement de la surbrillance au premier plan.
     private let tickInterval: Duration = .milliseconds(150)
 
-    public init(registry: ProviderRegistry = ProviderRegistry(),
-                lyricsService: LyricsService = CachingLyricsService(upstream: LRCLIBClient()),
-                activityController: LiveActivityController = LiveActivityController()) {
-        self.registry = registry
-        self.lyricsService = lyricsService
-        self.activityController = activityController
-        self.provider = registry.defaultProvider()
+    public init(registry: ProviderRegistry? = nil,
+                lyricsService: LyricsService? = nil,
+                activityController: LiveActivityController? = nil) {
+        let resolvedRegistry = registry ?? ProviderRegistry()
+        self.registry = resolvedRegistry
+        self.lyricsService = lyricsService ?? CachingLyricsService(upstream: LRCLIBClient())
+        self.activityController = activityController ?? LiveActivityController()
+        self.provider = resolvedRegistry.defaultProvider()
     }
 
     // MARK: - Cycle de vie
