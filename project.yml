@@ -20,6 +20,7 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     DEVELOPMENT_TEAM: "J8N26DNCFN"       # Apple Developer Program — Adam Haouzi
     CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1"          # iPhone uniquement (app iPhone + CarPlay) → pas d'exigence d'orientations iPad
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     GENERATE_INFOPLIST_FILE: NO
 
