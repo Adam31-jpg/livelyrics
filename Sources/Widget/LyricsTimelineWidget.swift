@@ -15,7 +15,8 @@ struct LyricsTimelineWidget: Widget {
         }
         .configurationDisplayName("Paroles en direct")
         .description("Affiche la parole en cours, synchronisée avec la musique.")
-        .supportedFamilies([.systemMedium, .systemLarge, .accessoryRectangular])
+        // .systemSmall est requis pour apparaître sur le dashboard CarPlay (iOS 26).
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryRectangular])
     }
 }
 
@@ -86,6 +87,20 @@ struct LyricsWidgetView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.currentLine).font(.headline).lineLimit(2)
             }
+        case .systemSmall:
+            // Format CarPlay : compact, parole courante mise en avant.
+            VStack(spacing: 4) {
+                Text(entry.currentLine.isEmpty ? "♪" : entry.currentLine)
+                    .font(.headline).foregroundStyle(.white)
+                    .multilineTextAlignment(.center).lineLimit(4)
+                    .minimumScaleFactor(0.6)
+                if !entry.nextLine.isEmpty {
+                    Text(entry.nextLine)
+                        .font(.caption2).foregroundStyle(.white.opacity(0.5))
+                        .multilineTextAlignment(.center).lineLimit(2)
+                }
+            }
+            .padding(8)
         default:
             VStack(spacing: 8) {
                 if let track = entry.track {

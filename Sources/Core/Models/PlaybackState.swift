@@ -13,12 +13,17 @@ public struct PlaybackState: Equatable, Codable, Sendable {
     /// Position de lecture (s) au moment `referenceDate`.
     public let position: TimeInterval
     public let referenceDate: Date
+    /// Pochette d'album (JPEG), si fournie par le provider. Hors `SharedSnapshot` pour
+    /// ne pas alourdir l'App Group : sert uniquement à l'UI plein écran de l'app.
+    public let artwork: Data?
 
-    public init(track: Track?, isPlaying: Bool, position: TimeInterval, referenceDate: Date) {
+    public init(track: Track?, isPlaying: Bool, position: TimeInterval, referenceDate: Date,
+                artwork: Data? = nil) {
         self.track = track
         self.isPlaying = isPlaying
         self.position = position.isFinite ? max(0, position) : 0
         self.referenceDate = referenceDate
+        self.artwork = artwork
     }
 
     /// Position estimée à `date` (par défaut maintenant), extrapolée si la lecture continue.

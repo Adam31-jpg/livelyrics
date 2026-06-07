@@ -1,5 +1,6 @@
 import Foundation
 import MediaPlayer
+import UIKit
 
 /// Provider Apple Music basé sur `MPMusicPlayerController.systemMusicPlayer`.
 ///
@@ -61,11 +62,17 @@ public final class AppleMusicProvider: MusicProvider {
                 duration: $0.playbackDuration
             )
         }
+        // Pochette d'album (≤ 600 px, JPEG) pour l'affichage plein écran de l'app.
+        let artworkData = item?.artwork
+            .flatMap { $0.image(at: CGSize(width: 600, height: 600)) }
+            .flatMap { $0.jpegData(compressionQuality: 0.8) }
+
         return PlaybackState(
             track: track,
             isPlaying: player.playbackState == .playing,
             position: player.currentPlaybackTime,
-            referenceDate: Date()
+            referenceDate: Date(),
+            artwork: artworkData
         )
     }
 

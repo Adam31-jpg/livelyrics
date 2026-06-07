@@ -13,6 +13,8 @@ public final class LyricsViewModel {
 
     // État exposé à l'UI
     public private(set) var track: Track?
+    /// Pochette d'album du morceau courant (JPEG), pour l'UI plein écran.
+    public private(set) var artwork: Data?
     public private(set) var lyrics: SyncedLyrics?
     public private(set) var currentLineIndex: Int?
     public private(set) var isPlaying = false
@@ -108,6 +110,7 @@ public final class LyricsViewModel {
         if state.track?.id != previousTrackID {
             // Nouvelle chanson → on (ré)initialise tout.
             track = state.track
+            artwork = state.artwork
             currentLineIndex = nil
             lyrics = nil
             if let track = state.track {
@@ -116,6 +119,9 @@ public final class LyricsViewModel {
                 status = .waitingForMusic
                 activityController.end()
             }
+        } else if state.artwork != nil {
+            // Même morceau : la pochette peut arriver après coup (chargement asynchrone).
+            artwork = state.artwork
         }
         refreshSharedState()
     }

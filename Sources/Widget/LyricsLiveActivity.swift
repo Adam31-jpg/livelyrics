@@ -36,28 +36,51 @@ struct LyricsLiveActivity: Widget {
                 Image(systemName: "music.note")
             }
         }
+        // Famille d'activité « small » : requise pour que CarPlay (et le Smart Stack
+        // watchOS) affichent le CONTENU des paroles plutôt que les seules icônes compactes.
+        .supplementalActivityFamilies([.small])
     }
 }
 
 private struct LockScreenLyricsView: View {
     let context: ActivityViewContext<LyricsActivityAttributes>
+    /// Famille de présentation : `.small` = CarPlay / Smart Stack watchOS, sinon écran verrouillé.
+    @Environment(\.activityFamily) private var activityFamily
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text("\(context.attributes.artist) – \(context.attributes.title)")
-                .font(.caption2).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
-
-            Text(context.state.currentLine.isEmpty ? "♪" : context.state.currentLine)
-                .font(.title3.bold()).foregroundStyle(.white)
-                .multilineTextAlignment(.center).lineLimit(2)
-
-            if !context.state.nextLine.isEmpty {
-                Text(context.state.nextLine)
-                    .font(.subheadline).foregroundStyle(.white.opacity(0.5))
-                    .multilineTextAlignment(.center).lineLimit(1)
+        switch activityFamily {
+        case .small:
+            // CarPlay : place limitée → on maximise la lisibilité de la parole courante.
+            VStack(spacing: 4) {
+                Text(context.state.currentLine.isEmpty ? "♪" : context.state.currentLine)
+                    .font(.headline).foregroundStyle(.white)
+                    .multilineTextAlignment(.center).lineLimit(3)
+                    .minimumScaleFactor(0.6)
+                if !context.state.nextLine.isEmpty {
+                    Text(context.state.nextLine)
+                        .font(.caption2).foregroundStyle(.white.opacity(0.5))
+                        .multilineTextAlignment(.center).lineLimit(1)
+                }
             }
+            .frame(maxWidth: .infinity)
+            .padding(8)
+        default:
+            VStack(spacing: 6) {
+                Text("\(context.attributes.artist) – \(context.attributes.title)")
+                    .font(.caption2).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
+
+                Text(context.state.currentLine.isEmpty ? "♪" : context.state.currentLine)
+                    .font(.title3.bold()).foregroundStyle(.white)
+                    .multilineTextAlignment(.center).lineLimit(2)
+
+                if !context.state.nextLine.isEmpty {
+                    Text(context.state.nextLine)
+                        .font(.subheadline).foregroundStyle(.white.opacity(0.5))
+                        .multilineTextAlignment(.center).lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
         }
-        .frame(maxWidth: .infinity)
-        .padding()
     }
 }

@@ -6,19 +6,31 @@ struct ContentView: View {
 
     @Environment(LyricsViewModel.self) private var viewModel
     @State private var showSettings = false
+    @State private var showNowPlaying = false
 
     var body: some View {
         ZStack {
             backgroundGradient.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                NowPlayingHeader(track: viewModel.track, isPlaying: viewModel.isPlaying)
-                    .padding(.horizontal)
-                    .padding(.top, 8)
+                Button {
+                    showNowPlaying = true
+                } label: {
+                    NowPlayingHeader(track: viewModel.track,
+                                     isPlaying: viewModel.isPlaying,
+                                     artwork: viewModel.artwork)
+                }
+                .buttonStyle(.plain)
+                .disabled(viewModel.track == nil)
+                .padding(.horizontal)
+                .padding(.top, 8)
 
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+        }
+        .fullScreenCover(isPresented: $showNowPlaying) {
+            NowPlayingFullView().environment(viewModel)
         }
         .overlay(alignment: .topTrailing) {
             Button { showSettings = true } label: {

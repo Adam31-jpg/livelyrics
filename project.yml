@@ -18,7 +18,7 @@ settings:
     SWIFT_STRICT_CONCURRENCY: minimal
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
-    DEVELOPMENT_TEAM: ""                 # ⚠️ À remplir dans Xcode (Signing & Capabilities)
+    DEVELOPMENT_TEAM: "J8N26DNCFN"       # Apple Developer Program — Adam Haouzi
     CODE_SIGN_STYLE: Automatic
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     GENERATE_INFOPLIST_FILE: NO
