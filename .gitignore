@@ -1,0 +1,24 @@
+# Xcode généré (on régénère via XcodeGen)
+*.xcodeproj
+*.xcworkspace
+!default.xcworkspace
+
+# Build
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Divers
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3

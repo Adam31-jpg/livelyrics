@@ -1,0 +1,9 @@
+# Force LF pour tout le code source (build sur macOS / Xcode)
+* text=auto eol=lf
+
+*.swift   text eol=lf
+*.yml     text eol=lf
+*.plist   text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+*.entitlements text eol=lf
