@@ -27,6 +27,13 @@ struct LyricsView: View {
                         proxy.scrollTo(newIndex, anchor: .center)
                     }
                 }
+                .onChange(of: lyrics.trackID) { _, _ in
+                    // Nouveau morceau → recale le défilement sur la ligne courante (ou le début),
+                    // même si l'index de ligne n'a pas changé (ex. 0 → 0).
+                    Task { @MainActor in
+                        proxy.scrollTo(currentIndex ?? 0, anchor: .center)
+                    }
+                }
             }
         } else {
             StatusMessage(icon: "music.note.list", title: "Pas de paroles synchronisées",

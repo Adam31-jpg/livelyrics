@@ -76,6 +76,14 @@ public final class AppleMusicProvider: MusicProvider {
         )
     }
 
+    /// Position live du lecteur système (bon marché : simple lecture de propriété).
+    /// Garde anti-NaN : `currentPlaybackTime` peut être NaN quand rien ne joue, ce qui
+    /// produirait des dates invalides côté widget (→ échec d'archivage de la timeline).
+    public func currentPlaybackPosition() -> TimeInterval {
+        let t = player.currentPlaybackTime
+        return (t.isFinite && t > 0) ? t : 0
+    }
+
     // MARK: - Observation
 
     private func beginObserving() {

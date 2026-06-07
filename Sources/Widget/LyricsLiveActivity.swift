@@ -1,6 +1,7 @@
 import SwiftUI
 import WidgetKit
 import ActivityKit
+import UIKit
 import LiveLyricsCore
 
 /// Rendu de la Live Activity des paroles : écran verrouillé, Dynamic Island, et
@@ -50,20 +51,31 @@ private struct LockScreenLyricsView: View {
     var body: some View {
         switch activityFamily {
         case .small:
-            // CarPlay : place limitée → on maximise la lisibilité de la parole courante.
-            VStack(spacing: 4) {
-                Text(context.state.currentLine.isEmpty ? "♪" : context.state.currentLine)
-                    .font(.headline).foregroundStyle(.white)
-                    .multilineTextAlignment(.center).lineLimit(3)
-                    .minimumScaleFactor(0.6)
-                if !context.state.nextLine.isEmpty {
-                    Text(context.state.nextLine)
-                        .font(.caption2).foregroundStyle(.white.opacity(0.5))
-                        .multilineTextAlignment(.center).lineLimit(1)
+            // CarPlay : pochette en fond assombrie + parole courante + suivante.
+            ZStack {
+                if let data = SharedArtworkStore.read(), let image = UIImage(data: data) {
+                    Image(uiImage: image).resizable().scaledToFill()
+                        .overlay(.black.opacity(0.55))
                 }
+                VStack(spacing: 3) {
+                    if !context.state.prevLine.isEmpty {
+                        Text(context.state.prevLine)
+                            .font(.caption2).foregroundStyle(.white.opacity(0.4))
+                            .multilineTextAlignment(.center).lineLimit(1)
+                    }
+                    Text(context.state.currentLine.isEmpty ? "♪" : context.state.currentLine)
+                        .font(.headline).foregroundStyle(.white)
+                        .multilineTextAlignment(.center).lineLimit(2)
+                        .minimumScaleFactor(0.6)
+                    if !context.state.nextLine.isEmpty {
+                        Text(context.state.nextLine)
+                            .font(.caption2).foregroundStyle(.white.opacity(0.55))
+                            .multilineTextAlignment(.center).lineLimit(1)
+                    }
+                }
+                .padding(8)
             }
             .frame(maxWidth: .infinity)
-            .padding(8)
         default:
             VStack(spacing: 6) {
                 Text("\(context.attributes.artist) – \(context.attributes.title)")

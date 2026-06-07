@@ -27,6 +27,19 @@ public protocol MusicProvider: AnyObject {
 
     /// Lit l'état courant à la demande (utile pour rafraîchir au premier plan).
     func currentState() -> PlaybackState
+
+    /// Position de lecture courante (s), lue en DIRECT si le service le permet.
+    /// Appelée à haute fréquence par la boucle de synchro → doit être bon marché
+    /// (pas d'encodage de pochette ici). Évite la dérive de l'extrapolation.
+    func currentPlaybackPosition() -> TimeInterval
+}
+
+public extension MusicProvider {
+    /// Par défaut : on retombe sur la position extrapolée de `currentState()`.
+    /// Les providers qui exposent une position live (Apple Music) redéfinissent ceci.
+    func currentPlaybackPosition() -> TimeInterval {
+        currentState().estimatedPosition()
+    }
 }
 
 /// Erreurs communes aux providers.

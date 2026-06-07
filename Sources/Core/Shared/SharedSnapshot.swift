@@ -45,10 +45,16 @@ public enum SharedSnapshotStore {
 
     private static let key = "currentSnapshot"
 
+    /// Écrit l'instantané. NE déclenche PAS de reload : appeler `reloadWidget()`
+    /// explicitement, et seulement sur un vrai changement (morceau / play-pause), pour
+    /// ne pas épuiser le budget de refresh d'iOS (sinon le widget finit par se figer).
     public static func write(_ snapshot: SharedSnapshot) {
         guard let data = try? JSONEncoder().encode(snapshot) else { return }
         AppGroup.defaults.set(data, forKey: key)
-        // Une seule demande de reload par mise à jour → le widget recalcule sa timeline.
+    }
+
+    /// Demande à WidgetKit de recalculer la timeline (1 reload = 1 chanson recalculée).
+    public static func reloadWidget() {
         WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.lyrics)
     }
 
@@ -61,6 +67,36 @@ public enum SharedSnapshotStore {
     }
 }
 
+/// Stocke la pochette du morceau courant dans un FICHIER du conteneur App Group
+/// (et non dans UserDefaults : un JPEG y serait trop lourd et écrit trop souvent).
+/// Lue par le grand widget et la Live Activity.
+public enum SharedArtworkStore {
+
+    private static var fileURL: URL? {
+        FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: AppGroup.identifier)?
+            .appendingPathComponent("current-artwork.jpg")
+    }
+
+    public static func write(_ data: Data?) {
+        guard let url = fileURL else { return }
+        if let data {
+            try? data.write(to: url, options: .atomic)
+        } else {
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+
+    public static func read() -> Data? {
+        guard let url = fileURL else { return nil }
+        return try? Data(contentsOf: url)
+    }
+}
+
 public enum WidgetKind {
-    public static let lyrics = "LyricsTimelineWidget"
+    // ⚠️ Changer ce "kind" force WidgetKit à repartir d'un store de timeline VIERGE.
+    // Indispensable après un changement de structure d'entrée : sinon WidgetKit tente
+    // de relire l'ancien cache (incompatible) → "Unable to unarchive collection" →
+    // tous les reloads échouent et le widget reste figé.
+    public static let lyrics = "LyricsCardWidget"
 }

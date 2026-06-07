@@ -33,7 +33,7 @@ public final class LyricsViewModel {
     // Réglage de calibration exposé à l'UI (relié à Settings).
     public var offset: TimeInterval {
         get { Settings.shared.syncOffset }
-        set { Settings.shared.syncOffset = newValue; refreshSharedState() }
+        set { Settings.shared.syncOffset = newValue; refreshSharedState(reloadWidget: true) }
     }
 
     // Dépendances (injectées → testables / remplaçables)
@@ -72,6 +72,19 @@ public final class LyricsViewModel {
         startTickLoop()
     }
 
+    /// Re-synchronise immédiatement depuis le provider. À appeler au retour au premier
+    /// plan : si le morceau a changé pendant que l'app était en arrière-plan (CarPlay,
+    /// Apple Music), on recharge les bonnes paroles sans attendre une notification.
+    public func refreshNow() {
+        let state = provider.currentState()
+        Task {
+            await handle(state)
+            // Si le morceau n'a pas changé (paroles déjà chargées), on force un reload du
+            // widget : il a pu se figer (throttling) ou être ajouté en cours de morceau.
+            if lyrics != nil { refreshSharedState(reloadWidget: true) }
+        }
+    }
+
     public func stop() {
         streamTask?.cancel()
         tickTask?.cancel()
@@ -104,13 +117,18 @@ public final class LyricsViewModel {
 
     private func handle(_ state: PlaybackState) async {
         let previousTrackID = playback.track?.id
+        let previousIsPlaying = playback.isPlaying
         playback = state
         isPlaying = state.isPlaying
 
-        if state.track?.id != previousTrackID {
+        let trackChanged = state.track?.id != previousTrackID
+        let playStateChanged = previousIsPlaying != state.isPlaying
+
+        if trackChanged {
             // Nouvelle chanson → on (ré)initialise tout.
             track = state.track
             artwork = state.artwork
+            SharedArtworkStore.write(state.artwork)   // pochette pour le widget
             currentLineIndex = nil
             lyrics = nil
             if let track = state.track {
@@ -119,11 +137,19 @@ public final class LyricsViewModel {
                 status = .waitingForMusic
                 activityController.end()
             }
-        } else if state.artwork != nil {
+        } else if state.artwork != nil, state.artwork != artwork {
             // Même morceau : la pochette peut arriver après coup (chargement asynchrone).
             artwork = state.artwork
+            SharedArtworkStore.write(state.artwork)
         }
-        refreshSharedState()
+        // Reload uniquement quand on a de quoi afficher :
+        //  - play/pause (mêmes paroles, on recale l'ancre),
+        //  - arrêt complet (track == nil → on vide la card).
+        // Le changement de morceau NE recharge PAS ici (paroles pas encore prêtes) :
+        // c'est `loadLyrics` qui rechargera une fois les paroles obtenues → pas de
+        // "reload vide puis reload plein abandonné par iOS".
+        let reload = playStateChanged || (trackChanged && state.track == nil)
+        refreshSharedState(reloadWidget: reload)
     }
 
     // MARK: - Chargement des paroles
@@ -146,7 +172,8 @@ public final class LyricsViewModel {
                     Log.lyrics.notice("Aucune parole trouvée pour \(track.displayName)")
                 }
                 self.startActivityIfNeeded()
-                self.refreshSharedState()
+                // Paroles chargées → nouvelle timeline : on recharge le widget une fois.
+                self.refreshSharedState(reloadWidget: true)
             } catch {
                 guard !Task.isCancelled else { return }
                 self.status = .error(error.localizedDescription)
@@ -169,7 +196,8 @@ public final class LyricsViewModel {
 
     private func tick() {
         guard let lyrics, lyrics.isSynced else { return }
-        let position = playback.estimatedPosition() + offset
+        // Position LIVE du lecteur (pas d'extrapolation) → pas de dérive, gère les seeks.
+        let position = provider.currentPlaybackPosition() + offset
         let newIndex = LyricsSyncEngine.activeIndex(in: lyrics.lines, at: position)
         if newIndex != currentLineIndex {
             currentLineIndex = newIndex
@@ -179,16 +207,19 @@ public final class LyricsViewModel {
 
     // MARK: - État partagé (widget) + Live Activity
 
-    private func refreshSharedState() {
+    private func refreshSharedState(reloadWidget: Bool = false) {
+        // Ancre RECALÉE sur la position live + maintenant → la timeline du widget reste
+        // juste même si le reload arrive avec un peu de retard (throttling iOS).
         let snapshot = SharedSnapshot(
             track: track,
             lines: lyrics?.lines ?? [],
             isSynced: lyrics?.isSynced ?? false,
-            anchorPosition: playback.position,
-            anchorDate: playback.referenceDate,
+            anchorPosition: provider.currentPlaybackPosition(),
+            anchorDate: Date(),
             isPlaying: playback.isPlaying,
             offset: offset)
         SharedSnapshotStore.write(snapshot)
+        if reloadWidget { SharedSnapshotStore.reloadWidget() }
     }
 
     private func startActivityIfNeeded() {
@@ -199,10 +230,11 @@ public final class LyricsViewModel {
 
     private func updateActivity(lineIndex: Int?) {
         guard Settings.shared.useLiveActivity, let lyrics else { return }
+        let prev = lineIndex.flatMap { lyrics.lines[safe: $0 - 1]?.text } ?? ""
         let current = lineIndex.flatMap { lyrics.lines[safe: $0]?.text } ?? ""
         let next = lineIndex.flatMap { lyrics.lines[safe: $0 + 1]?.text } ?? ""
         activityController.update(
-            state: .init(currentLine: current, nextLine: next,
+            state: .init(prevLine: prev, currentLine: current, nextLine: next,
                          lineIndex: lineIndex ?? -1, isPlaying: isPlaying))
     }
 }

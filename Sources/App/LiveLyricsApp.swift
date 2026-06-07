@@ -14,13 +14,8 @@ struct LiveLyricsApp: App {
                 .task { await viewModel.start() }
         }
         .onChange(of: scenePhase) { _, phase in
-            // On garde l'observation active ; on pourrait réduire la fréquence en arrière-plan.
-            if phase == .active { viewModel.objectWillResume() }
+            // Retour au premier plan → re-synchro (le morceau a pu changer en arrière-plan).
+            if phase == .active { viewModel.refreshNow() }
         }
     }
-}
-
-extension LyricsViewModel {
-    /// Hook léger appelé au retour au premier plan (rien de bloquant ici pour l'instant).
-    func objectWillResume() {}
 }

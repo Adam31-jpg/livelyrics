@@ -7,12 +7,15 @@ public struct LyricsActivityAttributes: ActivityAttributes {
 
     /// État dynamique : mis à jour à chaque changement de ligne.
     public struct ContentState: Codable, Hashable {
+        public var prevLine: String
         public var currentLine: String
         public var nextLine: String
         public var lineIndex: Int
         public var isPlaying: Bool
 
-        public init(currentLine: String, nextLine: String, lineIndex: Int, isPlaying: Bool) {
+        public init(prevLine: String = "", currentLine: String, nextLine: String,
+                    lineIndex: Int, isPlaying: Bool) {
+            self.prevLine = prevLine
             self.currentLine = currentLine
             self.nextLine = nextLine
             self.lineIndex = lineIndex
