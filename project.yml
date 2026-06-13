@@ -17,7 +17,7 @@ settings:
     SWIFT_VERSION: "5.0"                 # Mode 5 = concurrence souple (moins de friction au build)
     SWIFT_STRICT_CONCURRENCY: minimal
     MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "2"
+    CURRENT_PROJECT_VERSION: "3"
     DEVELOPMENT_TEAM: "J8N26DNCFN"       # Apple Developer Program — Adam Haouzi
     CODE_SIGN_STYLE: Automatic
     TARGETED_DEVICE_FAMILY: "1"          # iPhone uniquement (app iPhone + CarPlay) → pas d'exigence d'orientations iPad
